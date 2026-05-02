@@ -1,0 +1,11 @@
+import re
+import numpy as np
+
+
+START_POS = [0, 0, 0.05]
+INIT_ORIENTATION = [0, 0, 0]
+
+WHEEL_SEPARATION=0.16
+WHEEL_RADIUS=0.033
+
+MAX_FORCE=1.0
