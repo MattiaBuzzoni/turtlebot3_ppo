@@ -168,6 +168,16 @@ class Robot:
             self._pybullet_client.resetJointState(
                 self._wheeled, self._joint_name_to_id[name], 0, targetVelocity=0)
             
+    def get_contacts(self):
+        all_contacts = self._pybullet_client.getContactPoints(bodyA=self._wheeled)
+
+        for contact in all_contacts:
+            body_b = contact[2]  
+            if body_b != self._wheeled and body_b != 0:
+                return True
+
+        return False
+            
     def _load_equipment(self):
         self._equip = {}
         if 'hardware' in self._marks.MARK_PARAMS[self._mark]:
@@ -194,6 +204,9 @@ class Robot:
 
     def get_default_lidar(self):
         return self._equip["lds"][self._equip["default_lds"]]     
+    
+    def terminate(self):
+        pass
 
 
 

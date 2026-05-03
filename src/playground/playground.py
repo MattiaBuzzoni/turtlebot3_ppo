@@ -106,12 +106,11 @@ class Playground:
                 if self.parse_equipment_ui_params(self._ui["equip"]):
                     # show cam view
                     self._sim.robot.update_camera()
-                
-                self._sim.robot.update_lidar()
                 # get controller generated action
                 action = self._parse_ctrl_input()
                 # apply action to robot
                 self._sim.apply_step_action(action)
+                self._sim.robot.update_lidar()
                 current_time = self._sim._get_time_since_reset()
                 expected_duration = current_time - start_time_robot
                 actual_duration = time.time() - start_time_wall

@@ -37,7 +37,7 @@ class Terrain:
 
         if self.terrain_type == 'plane':
             self.id = pybullet_client.loadURDF("plane.urdf")
-            pybullet_client.changeVisualShape(self.id, -1, rgbaColor=[.5, .5, .5, 1])
+            pybullet_client.changeVisualShape(self.id, -1, rgbaColor=[1, 1, 1, 1])
     
     @staticmethod
     def setup_ui_params(pybullet_client: Any) -> dict[str, Any]:
