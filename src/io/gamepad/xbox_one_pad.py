@@ -22,7 +22,7 @@ class XboxGamepad:
       2) Use the left joystick for forward/backward/left/right walking.
       3) Use the right joystick for rotation around the z-axis.
     """
-    def __init__(self, vel_scale_x=.4, vel_scale_y=.4, vel_scale_rot=1.):
+    def __init__(self, vel_scale_x=1., vel_scale_y=1., vel_scale_rot=1.):
         """
         Initialize the gamepad controller.
 

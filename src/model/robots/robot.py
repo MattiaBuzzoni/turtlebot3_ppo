@@ -90,7 +90,7 @@ class Robot:
         return self.transform_angular_velocity_to_local_frame(angular_velocity, orientation)
     
     def get_base_velocity(self):
-        """Get the linear velocityof robot's base."""
+        """Get the linear velocity of robot's base."""
         velocity, _ = self._pybullet_client.getBaseVelocity(self._wheeled)
         
         return velocity
@@ -118,8 +118,8 @@ class Robot:
     
     def apply_action(self, motor_commands):
         """Apply motion command to TurtleBot3."""
-        linear_velocity = motor_commands[0]
-        angular_velocity = motor_commands[1]
+        linear_velocity = motor_commands[0] * self._constants.MAX_LIN_VEL
+        angular_velocity = motor_commands[1] * self._constants.MAX_ANG_VEL
 
         L = self._constants.WHEEL_SEPARATION
         R = self._constants.WHEEL_RADIUS
@@ -207,9 +207,3 @@ class Robot:
     
     def terminate(self):
         pass
-
-
-
-
-    
-

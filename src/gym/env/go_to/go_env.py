@@ -159,7 +159,7 @@ class GoEnv(robot_gym_env.RobotGymEnv):
         start_pos = self._simulation.robot.get_constants().START_POS
         max_distance = math.hypot(start_pos[0] - self._target_position[0], 
                                   start_pos[1] - self._target_position[1])
-        print(max_distance)
+        
         return max_distance
     
     def _on_target(self):
@@ -174,29 +174,31 @@ class GoEnv(robot_gym_env.RobotGymEnv):
                                       self.simulation.robot._wheeled,
                                       self.simulation.pybullet_client)
         yaw, rel_theta, diff_angle = self.get_odometry()
+        norm_diff_angle = diff_angle / np.pi
+
+        (x, y), _ = self.pos
+        (vx, vy), _ = self.vel
 
         scan_range = []
         scans = self.simulation.robot.update_lidar()
-        batches = scans[:30].reshape((10, 3))
+        batches = scans.reshape((36, 10))
         min_values = np.min(batches, axis=1)
 
-        for i in range(len(min_values)):
-            if min_values[i] == float('Inf'):
-                scan_range.append(3.5)
-            elif np.isnan(min_values[i]):
-                scan_range.append(0)
-            else:
-                scan_range.append(min_values[i])
+        scan_range = np.clip(min_values, 0, 3.5) / 3.5
+        scan_range = np.nan_to_num(scan_range, nan=0.0)
 
-        target_distance = self._distance_to_target()
-        (x, y), _ = self.pos
+        norm_target_dist = self._distance_to_target() / self._max_distance_to_target()
+        norm_target_dist = np.clip(norm_target_dist, 0, 1)
 
-        self._observation = (
-            scan_range
-            + [x, y]
-            + [yaw, rel_theta, diff_angle] 
-            + [target_distance]
-        )
+        observation = np.concatenate([
+            scan_range,        
+            [x, y],                
+            [norm_target_dist],        
+            [norm_diff_angle],
+            [yaw, rel_theta],
+            ]).astype(np.float32)
+
+        self._observation = observation.tolist()
 
         return self._observation
     
@@ -210,8 +212,7 @@ class GoEnv(robot_gym_env.RobotGymEnv):
         max_target_dist = self._max_distance_to_target()
         dist_err_norm = target_dist * (1 / max_target_dist)
 
-        if self._on_target():
-            reward += 1000.
+        reward += 1000. * (1 - dist_err_norm)**2
 
         # Time penalty 
         reward -= 0.15

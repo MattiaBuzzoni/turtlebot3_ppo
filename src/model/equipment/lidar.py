@@ -150,7 +150,9 @@ class Lidar:
         distances = []
         for hit_result in hit_results:
             if hit_result[0] != -1:  # Hit detected
-                distances.append(hit_result[2] * self._ray_length)
+                noise = np.random.normal(loc=0, scale=0.01)   # LIDAR sensors have millimetre-level accuracy, but it varies (noise_std = 0.01 (1 cm)).
+                distance = np.clip(hit_result[2] * self._ray_length + noise, .0, self._ray_length)
+                distances.append(distance)
             else:
                 distances.append(float('Inf'))
 
