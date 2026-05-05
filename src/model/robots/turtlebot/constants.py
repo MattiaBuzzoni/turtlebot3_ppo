@@ -1,9 +1,10 @@
 import re
+import math
 import numpy as np
 
 
 START_POS = [0, 0, 0.05]
-INIT_ORIENTATION = [0, 0, 0]
+INIT_ORIENTATION = [0, 0, math.pi]
 
 WHEEL_SEPARATION=0.16
 WHEEL_RADIUS=0.033

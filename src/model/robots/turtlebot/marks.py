@@ -27,7 +27,7 @@ MARK_PARAMS = {
                         "name": "lidar",
                         "link": 5,
                         "angle_resolution_deg": 1,
-                        "ray_direction_range_deg": (-180, 180),
+                        "ray_direction_range_deg": (-180, 179),
                         "ray_length": 3.5,
                         "offset": 0.15,
                     }

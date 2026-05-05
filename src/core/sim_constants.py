@@ -13,6 +13,13 @@ SIMULATION_TIME_STEP = 0.001
 # Camera
 RENDER_HEIGHT = 360
 RENDER_WIDTH = 480
-CAMERA_DISTANCE = 1.0
+CAMERA_DISTANCE = 3.0
 CAMERA_YAW = 0
 CAMERA_PITCH = -30
+
+BOX = [
+    {'position': [0, 5, 0.25], 'half_extents': [5, 0.05, 0.25]},   # Front wall
+    {'position': [0, -5, 0.25], 'half_extents': [5, 0.05, 0.25]},  # Back wall
+    {'position': [-5, 0, 0.25], 'half_extents': [0.05, 5, 0.25]},  # Left wall
+    {'position': [5, 0, 0.25], 'half_extents': [0.05, 5, 0.25]},   # Right wall
+    ]

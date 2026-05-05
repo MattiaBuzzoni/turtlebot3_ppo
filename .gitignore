@@ -14,3 +14,7 @@ build/
 
 # Scratch files
 main.py
+
+# Scripts to remove
+^Trash
+example.py

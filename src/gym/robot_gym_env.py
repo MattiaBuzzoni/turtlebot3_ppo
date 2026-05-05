@@ -12,7 +12,7 @@ from src.core.simulation import Simulation
 
 class RobotGymEnv(gym.Env, ABC):
     
-    metadata = {"render.modes": ["human", "gui", "rgb_array"], "video.frames_per_second": 100}
+    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 100}
 
     def __init__(
         self, 
@@ -69,7 +69,7 @@ class RobotGymEnv(gym.Env, ABC):
         self._simulation.robot.terminate()
 
     def reset(self, **kwargs):
-        print("reset simulation")
+        #print("reset simulation")
         self.simulation.reset()
 
         if self.simulation.terrain.terrain_type != "plane":
@@ -95,7 +95,7 @@ class RobotGymEnv(gym.Env, ABC):
             self._simulation.pybullet_client.getQuaternionFromEuler(orientation)
         )
 
-        return self.get_observation()
+        return self.get_observation(), {}
     
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -110,9 +110,12 @@ class RobotGymEnv(gym.Env, ABC):
             self._simulation.robot.update_lidar()
         observation = self.get_observation()
         reward = self.reward()
-        done, info = self.termination()
 
-        return np.array(observation), reward, done, info
+        terminated, info = self.termination()
+
+        truncated = False  # oppure tuo time-limit logic
+
+        return np.array(observation), reward, terminated, truncated, info
 
     def render(self, mode="rgb_array", close=False):
         return self._simulation.render(mode)

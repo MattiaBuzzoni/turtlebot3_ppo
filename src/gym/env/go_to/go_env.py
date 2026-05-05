@@ -73,12 +73,12 @@ class GoEnv(robot_gym_env.RobotGymEnv):
             self._build_world(True)
 
     def _build_action_space(self):
-        self.action_space = spaces.Box(low=np.array([-1.0, -1.0]),
-                                       high=np.array([1.0, 1.0]))
+        self.action_space = spaces.Box(low=np.array([-1.0, -1.0], dtype=np.float32),
+                                       high=np.array([1.0, 1.0], dtype=np.float32))
         
     def _build_observation_space(self):
         self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(16,), dtype=np.float32
+            low=-np.inf, high=np.inf, shape=(42,), dtype=np.float32
         )
 
     def _setup_ui_parameters(self):
@@ -198,7 +198,7 @@ class GoEnv(robot_gym_env.RobotGymEnv):
             [yaw, rel_theta],
             ]).astype(np.float32)
 
-        self._observation = observation.tolist()
+        self._observation = np.array(observation)
 
         return self._observation
     
@@ -224,13 +224,13 @@ class GoEnv(robot_gym_env.RobotGymEnv):
         return reward 
 
     
-    def reset(self):
+    def reset(self, seed=None, options=None):
         if self._debug:
             # Create world object
             self._build_world()
             # Setup sim camera position
             # self.simulation.set_camera(3.8, 0, -30)
-
+        self._build_world()
         self._done = False
 
         return super(GoEnv, self).reset()

@@ -142,9 +142,13 @@ class Robot:
     def _load_urdf(self):
         x, y, z = self._constants.START_POS
         start_position = [x, y, z + self._z_offset]
+        start_orientation = self._pybullet_client.getQuaternionFromEuler(
+        self._constants.INIT_ORIENTATION 
+    )
 
         return self._pybullet_client.loadURDF(
-            f"{pybullet_data.getDataPath()}/{self._marks.MARK_PARAMS[self._mark]['urdf_name']}", start_position
+            f"{pybullet_data.getDataPath()}/{self._marks.MARK_PARAMS[self._mark]['urdf_name']}", 
+            start_position, start_orientation
         )
 
     def _build_joint_name_to_dict(self):
