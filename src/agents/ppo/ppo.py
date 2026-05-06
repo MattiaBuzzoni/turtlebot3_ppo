@@ -307,7 +307,7 @@ class PPO(Agent):
         # This segment of code is similar to that in get_action()
         mean = self._actor(batch_obs)
         mean = torch.stack([
-            torch.clamp(mean[:, 0], -1, 1),
+            torch.clamp(mean[:, 0], 0, 1),
             torch.clamp(mean[:, 1], -1, 1)
         ], dim=1)
         dist = MultivariateNormal(mean, self._cov_mat)

@@ -17,7 +17,7 @@
 def default():
     """Default configuration for PPO."""
     # General
-    total_timesteps = 500_000
+    total_timesteps = 1_000_000
     timesteps_per_batch = 8000
     max_timesteps_per_episode = 800
     n_updates_per_iteration = 50

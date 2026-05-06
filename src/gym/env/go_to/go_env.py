@@ -124,9 +124,9 @@ class GoEnv(robot_gym_env.RobotGymEnv):
     def update_position_velocity(self, current_pos, current_orient, robot_id, pybullet_client):
         new_xy, new_yaw = self.format_position(current_pos, current_orient)
         self.prev_pos = self.pos
-        self.prev_vel = self.vel
+        # self.prev_vel = self.vel
         self.pos = new_xy, new_yaw
-        self.vel = self.get_velocity(pybullet_client, robot_id)
+        # self.vel = self.get_velocity(pybullet_client, robot_id)
 
     @staticmethod
     def format_position(position, orientation):
@@ -175,7 +175,7 @@ class GoEnv(robot_gym_env.RobotGymEnv):
         yaw, rel_theta, diff_angle = self.get_odometry()
 
         (x, y), _ = self.pos
-        (vx, vy), _ = self.vel
+        # (vx, vy), _ = self.vel
 
         scan_range = []
         scans = self.simulation.robot.update_lidar()
@@ -220,9 +220,9 @@ class GoEnv(robot_gym_env.RobotGymEnv):
         # Goal-oriented Reward Function
         A = np.mod((0.5 * (G_h + np.pi)), 2 * np.pi)
         if d_goal > 0.5 or d_goal <= 0:
-            reward -= 10
+            reward = -10
         elif 0 < d_goal <= 0.5:
-            reward += 200. * d_goal * (1 - 4 * np.abs(0.5 - np.mod((A/np.pi), 1)))
+            reward = 200. * d_goal * (1 - 4 * np.abs(0.5 - np.mod((A/np.pi), 1)))
 
         return reward 
 
