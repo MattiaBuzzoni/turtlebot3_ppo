@@ -173,7 +173,6 @@ class GoEnv(robot_gym_env.RobotGymEnv):
                                       self.simulation.robot._wheeled,
                                       self.simulation.pybullet_client)
         yaw, rel_theta, diff_angle = self.get_odometry()
-        norm_diff_angle = diff_angle / np.pi
 
         (x, y), _ = self.pos
         (vx, vy), _ = self.vel
@@ -183,17 +182,17 @@ class GoEnv(robot_gym_env.RobotGymEnv):
         batches = scans.reshape((36, 10))
         min_values = np.min(batches, axis=1)
 
-        scan_range = np.clip(min_values, 0, 3.5) / 3.5
+        scan_range = np.clip(min_values, 0, 3.5)
         scan_range = np.nan_to_num(scan_range, nan=0.0)
 
-        norm_target_dist = self._distance_to_target() / self._max_distance_to_target()
-        norm_target_dist = np.clip(norm_target_dist, 0, 1)
+        target_dist = self._distance_to_target()
+
 
         observation = np.concatenate([
             scan_range,        
             [x, y],                
-            [norm_target_dist],        
-            [norm_diff_angle],
+            [target_dist],        
+            [diff_angle],
             [yaw, rel_theta],
             ]).astype(np.float32)
 
