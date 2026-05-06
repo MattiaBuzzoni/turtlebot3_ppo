@@ -55,8 +55,8 @@ class GoEnv(robot_gym_env.RobotGymEnv):
 
         self.prev_pos = ((0., 0.), 0.)
         self.pos = ((0., 0.), 0.)
-        self.prev_vel = ((0., 0.), 0.)
-        self.vel = ((0., 0.), 0.)
+        #self.prev_vel = ((0., 0.), 0.)
+        #self.vel = ((0., 0.), 0.)
         
         self._done = False
         self._plot = None 
@@ -110,15 +110,14 @@ class GoEnv(robot_gym_env.RobotGymEnv):
 
         x, y, _ = pos
 
-        yaw = math.degrees(orn[2])
-        yaw = yaw % 360
+        yaw = orn[2]
 
         dx = self._target_position[0] - x
         dy = self._target_position[1] - y
 
-        rel_theta = math.degrees(math.atan2(dy, dx))
+        rel_theta = math.atan2(dy, dx)
 
-        diff_angle = (yaw - rel_theta + 180) % 360 - 180
+        diff_angle = (yaw - rel_theta + math.pi) % (2 * math.pi) - math.pi
 
         return yaw, rel_theta, diff_angle
     
@@ -155,12 +154,12 @@ class GoEnv(robot_gym_env.RobotGymEnv):
         
         return distance
     
-    def _max_distance_to_target(self):
-        start_pos = self._simulation.robot.get_constants().START_POS
-        max_distance = math.hypot(start_pos[0] - self._target_position[0], 
-                                  start_pos[1] - self._target_position[1])
+    def _prev_distance_to_target(self):
+        (px, py), _ = self.prev_pos
+        distance = math.hypot(px - self._target_position[0], 
+                              py - self._target_position[1])
         
-        return max_distance
+        return distance
     
     def _on_target(self):
         if self._distance_to_target() <= 0.1:
@@ -207,23 +206,27 @@ class GoEnv(robot_gym_env.RobotGymEnv):
     
     def reward(self):
         reward = 0.
-        # Max distance error
-        target_dist = self._distance_to_target()
-        max_target_dist = self._max_distance_to_target()
-        dist_err_norm = target_dist * (1 / max_target_dist)
+        pos = self.simulation.robot.get_base_position()
+        orn = self.simulation.robot.get_base_roll_pitch_yaw()
+        yaw = orn[2]
 
-        reward += 1000. * (1 - dist_err_norm)**2
+        # Goal Distance Rate
+        d_goal = self._prev_distance_to_target() - self._distance_to_target()
 
-        # Time penalty 
-        reward -= 0.15
+        # Goal Heading
+        dx = self._target_position[0] - pos[0]
+        dy = self._target_position[1] - pos[1]
+        G_h = math.atan2(dy, dx) - yaw
 
-        if target_dist > max_target_dist:
-            # Distance penalty
-            reward -= 100.
+        # Goal-oriented Reward Function
+        A = np.mod((0.5 * (G_h + np.pi)), 2 * np.pi)
+        if d_goal > 0.5 or d_goal <= 0:
+            reward -= 10
+        elif 0 < d_goal <= 0.5:
+            reward += 200. * d_goal * (1 - 4 * np.abs(0.5 - np.mod((A/np.pi), 1)))
 
         return reward 
 
-    
     def reset(self, seed=None, options=None):
         if self._debug:
             # Create world object
@@ -231,6 +234,12 @@ class GoEnv(robot_gym_env.RobotGymEnv):
             # Setup sim camera position
             # self.simulation.set_camera(3.8, 0, -30)
         self._build_world()
+
+        new_xy, new_yaw = self.format_position(self.simulation.robot.get_base_position(),
+                                               self.simulation.robot.get_base_roll_pitch_yaw())
+        self.pos = new_xy, new_yaw
+        self.prev_pos = new_xy, new_yaw
+
         self._done = False
 
         return super(GoEnv, self).reset()
