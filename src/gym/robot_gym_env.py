@@ -113,7 +113,7 @@ class RobotGymEnv(gym.Env, ABC):
 
         terminated, info = self.termination()
 
-        truncated = False  # oppure tuo time-limit logic
+        truncated = False  
 
         return np.array(observation), reward, terminated, truncated, info
 
