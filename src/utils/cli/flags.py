@@ -1,5 +1,5 @@
 ENV_ID_TO_POLICY = {
-    'go_ppo': ('src/policies/go_to/ppo', 'model.ckpt-5250000')
+    'go': ('src/policies/go/', 'ppo_actor.ckpt-...')
 }
 
 ENV_ID_TO_ENV = {

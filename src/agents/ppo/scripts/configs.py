@@ -18,16 +18,16 @@ def default():
     """Default configuration for PPO."""
     # General
     total_timesteps = 1_000_000
-    timesteps_per_batch = 8000
-    max_timesteps_per_episode = 800
-    n_updates_per_iteration = 50
+    timesteps_per_batch = 4_096
+    max_timesteps_per_episode = 1_000
+    n_updates_per_iteration = 10
 
     # Network
-    lr = 3e-4
+    lr = 2e-4
 
     gamma = 0.99 
     clip = 0.2 
-    save_freq = 2
+    save_freq = 5
     use_gpu = True 
 
     return locals()

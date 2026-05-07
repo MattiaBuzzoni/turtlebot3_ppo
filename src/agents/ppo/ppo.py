@@ -52,6 +52,25 @@ class PPO(Agent):
         self._log_dir = log_dir
         self._debug = debug_mode
 
+        self._config = AttrDict(getattr(configs, self._env_id)())
+        
+        # Extractenvironment information
+        self._env = self._create_environment(self._config)
+        self._obs_dim = self._env.observation_space.shape[0]
+        self._act_dim = self._env.action_space.shape[0]
+
+        # Initialize actor and critic networks
+        self._actor = NetActor(self._obs_dim, self._act_dim).to(device)
+        self._critic = NetCritic(self._obs_dim, 1).to(device)
+
+        # Initialize optimizers for actor and critic
+        self._actor_optim = Adam(self._actor.parameters(), lr=self._config.lr)
+        self._critic_optim = Adam(self._critic.parameters(), lr=self._config.lr)
+
+        # Initialize the covariance matrix used to query the actor for actions
+        self._cov_var = torch.full(size=(self._act_dim,), fill_value=0.8).to(device)
+        self._cov_mat = torch.diag(self._cov_var).to(device)
+
 
     
     def _create_environment(self, config):
@@ -127,13 +146,13 @@ class PPO(Agent):
             
             # Save our model if it's time
             # create model folder
-            path = f'../params/{self._env_id}'
+            path = f'src/policies/{self._env_id}'
             os.makedirs(path, exist_ok=True)
 
             if i_so_far % config.save_freq == 0:
                 epoch = i_so_far // config.save_freq
-                torch.save(self._actor.state_dict(), f'../params/{self._env_id}/ppo_actor_{epoch}.pth')
-                torch.save(self._critic.state_dict(), f'../params/{self._env_id}/ppo_critic_{epoch}.pth')
+                torch.save(self._actor.state_dict(), f'{path}/ppo_actor_{epoch}.pth')
+                torch.save(self._critic.state_dict(), f'{path}/ppo_critic_{epoch}.pth')
 
     def _rollout(self, t_so_far, config):
         """
@@ -321,22 +340,6 @@ class PPO(Agent):
         """Create configuration and launch the training."""
         timestamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
         full_logdir = os.path.expanduser(os.path.join(self._log_dir, '{}-{}'.format(timestamp, self._env_id)))
-        config = AttrDict(getattr(configs, self._env_id)())
-        # Extractenvironment information
-        self._env = self._create_environment(config)
-        self._obs_dim = self._env.observation_space.shape[0]
-        self._act_dim = self._env.action_space.shape[0]
 
-        # Initialize actor and critic networks
-        self._actor = NetActor(self._obs_dim, self._act_dim).to(device)
-        self._critic = NetCritic(self._obs_dim, 1).to(device)
-
-        # Initialize optimizers for actor and critic
-        self._actor_optim = Adam(self._actor.parameters(), lr=config.lr)
-        self._critic_optim = Adam(self._critic.parameters(), lr=config.lr)
-
-        # Initialize the covariance matrix used to query the actor for actions
-        self._cov_var = torch.full(size=(self._act_dim,), fill_value=0.8).to(device)
-        self._cov_mat = torch.diag(self._cov_var).to(device)
-        self._learn(config)
+        self._learn(self._config)
 

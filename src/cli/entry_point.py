@@ -15,6 +15,29 @@ def cli():
 @click.option('--flag', '-f', type=(str, bool), help="The Environment's flag(s).", multiple=True)
 @click.option('--log-dir', '-log', '-l', required=True, help="The path where the log directory will be created.")
 @click.option('--debug', '-d', type=bool, default=False, help="Demo: 1 agent, render enabled.")
+@click.option('--robot', '-r', default="ghost", help="The robot you want to use.",
+              type=click.Choice(flags.SUPPORTED_ROBOTS))
+@click.option('--terrain', '-t', default="plane", help="Set the simulation terrain.",
+              type=click.Choice(flags.TERRAIN_TYPE))
+@click.option('--mark', '-m', default="1", help="Set the robot mark.")
+@click.option('--agent', '-a', default="ppo", help="The agent you want to use.",
+              type=click.Choice(flags.SUPPORTED_AGENTS))
+def policy(env, param, flag, log_dir, debug, robot, terrain, mark, agent):
+    # import locally the PolicyPlayer to avoid the pyBullet loading at every cli command
+    from src.core.policy_player import PolicyPlayer
+    # parse input args
+    args, robot_obj, agent_obj = _parse_input(param, flag, terrain, mark, robot, agent)
+    # run the Policy Player
+    PolicyPlayer(env, args, robot_obj, debug, log_dir, agent_obj).play()
+
+
+@cli.command()
+@click.option('--env', '-e', required=True, help="The Environment name.",
+              type=click.Choice([e for e in flags.ENV_ID_TO_ENV.keys()], case_sensitive=True))
+@click.option('--param', '-p', type=(str, float), help="The Environment's param(s).", multiple=True)
+@click.option('--flag', '-f', type=(str, bool), help="The Environment's flag(s).", multiple=True)
+@click.option('--log-dir', '-log', '-l', required=True, help="The path where the log directory will be created.")
+@click.option('--debug', '-d', type=bool, default=False, help="Demo: 1 agent, render enabled.")
 @click.option('--robot', '-r', default="turtlebot3", help="The robot you want to use.",
               type=click.Choice(flags.SUPPORTED_ROBOTS))
 @click.option('--terrain', '-t', default="plane", help="Set the simulation terrain.",
