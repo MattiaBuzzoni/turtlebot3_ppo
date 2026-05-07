@@ -15,7 +15,7 @@ class ResBlock(nn.Module):
     def __init__(self,
                  Fin,
                  Fout,
-                 n_neurons=512):
+                 n_neurons=256):
 
         super(ResBlock, self).__init__()
         self.Fin = Fin
@@ -38,7 +38,8 @@ class ResBlock(nn.Module):
         Xin = x if self.Fin == self.Fout else self.ll(self.fc3(x))
 
 
-        Xout = self.fc1(x)  # n_neurons
+        Xout = self.fc1(x) 
+        #Xout = self.bn1(Xout)
         Xout = self.ll(Xout)
 
         #Xout = self.bn2(Xout)
@@ -60,7 +61,7 @@ class NetActor(nn.Module):
 
         self.rb1 = ResBlock(in_dim, in_dim)
         self.rb2 = ResBlock(in_dim + in_dim, in_dim + in_dim)
-        self.rb3 = ResBlock(n_neurons + in_dim, n_neurons)
+        # self.rb3 = ResBlock(n_neurons + in_dim, n_neurons)
 
         self.out1 = nn.Linear(in_dim + in_dim, out_dim - 1)
         nn.init.orthogonal_(self.out1.weight, gain=0.01)

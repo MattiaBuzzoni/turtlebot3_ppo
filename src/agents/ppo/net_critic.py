@@ -14,7 +14,7 @@ class ResBlock(nn.Module):
     def __init__(self,
                  Fin,
                  Fout,
-                 n_neurons=512):
+                 n_neurons=256):
 
         super(ResBlock, self).__init__()
         self.Fin = Fin
@@ -34,7 +34,7 @@ class ResBlock(nn.Module):
     def forward(self, x, final_nl=True):
         Xin = x if self.Fin == self.Fout else self.ll(self.fc3(x))
 
-        Xout = self.fc1(x)  # n_neurons
+        Xout = self.fc1(x)  
         # Xout = self.bn1(Xout)
         Xout = self.ll(Xout)
 
@@ -50,7 +50,7 @@ class NetCritic(nn.Module):
     def __init__(self,
                  in_dim,
                  out_dim,
-                 n_neurons=512,
+                 n_neurons=256,
                  **kwargs):
         super(NetCritic, self).__init__()
 

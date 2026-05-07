@@ -12,23 +12,6 @@ from src.utils.cli import flags
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-class Trainer:
-    def __init__(self, env_id, args, robot, controller, debug, log_dir, agent, agents_number):
-        self._args = args
-        self._debug = debug
-        self._log_dir = log_dir
-        self._agents = agents_number
-        self._controller = controller
-        self._robot = robot
-        self._env_id = env_id
-        self._args["robot_model"] = self._robot
-        self._args["controller_class"] = self._controller
-        if self._debug:
-            self._args['render'] = True
-        self._args['debug'] = self._debug
-        self._agent = agent(self._env_id, self._args, self._agents, self._log_dir, self._debug)
-
-
 class PolicyPlayer:
     def __init__(self, env_id: str, robot: str, debug: bool, args: dict, log_dir, agent):
         self._args = args
@@ -53,7 +36,6 @@ class PolicyPlayer:
         self._actor.load_state_dict(torch.load(policy_path))
 
         with torch.no_grad():
-
             sum_rewards = 0
             observation, _ = torch.tensor(self._agent._env.reset(), dtype=torch.float32).to(device)
 
