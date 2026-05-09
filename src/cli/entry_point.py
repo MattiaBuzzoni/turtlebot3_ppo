@@ -28,7 +28,7 @@ def policy(env, param, flag, log_dir, debug, robot, terrain, mark, agent):
     # parse input args
     args, robot_obj, agent_obj = _parse_input(param, flag, terrain, mark, robot, agent)
     # run the Policy Player
-    PolicyPlayer(env, args, robot_obj, debug, log_dir, agent_obj).play()
+    PolicyPlayer(env, robot_obj, debug, args, log_dir, agent_obj).play()
 
 
 @cli.command()
@@ -59,14 +59,14 @@ def train(env, param, flag, log_dir, debug, robot, terrain, mark, agent):
               type=click.Choice(flags.SUPPORTED_ROBOTS))
 @click.option('--mark', '-m', default="1", help="Set the robot mark (version).")
 @click.option('--record-video', '-rec', type=bool, default=False, help="Record a video clip (mp4).")
-@click.option('--gamepad', '-pad', '-g', type=bool, default=False, help="Control the robot using a gamepad.")
-def playground(robot, mark, record_video, gamepad):
+@click.option('--controller', '-g', type=str, default='keyboard', help="Control the robot using a gamepad or the keyboard.")
+def playground(robot, mark, record_video, controller):
     from src.playground.playground import Playground
     from src.utils.cli import mapper
     args = _parse_mark(mark)
     args["robot_model"] = mapper.ROBOTS[robot]
     args["record_video"] = record_video
-    args["gamepad"] = gamepad
+    args["controller"] = controller
     Playground(**args).run()
 
 

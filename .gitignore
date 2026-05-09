@@ -12,9 +12,8 @@ venv/
 dist/
 build/
 
-# Scratch files
-main.py
+# Trained policies
+policies/
 
-# Scripts to remove
-^Trash
-example.py
+# Logs
+logs/

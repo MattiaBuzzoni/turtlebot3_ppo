@@ -8,6 +8,7 @@ import pybullet as p
 
 from src.core.simulation import Simulation
 from src.io.gamepad import xbox_one_pad
+from src.io.keyboard import keyboard
 from src.model.robots.turtlebot import turtlebot
 
 class Playground:
@@ -17,17 +18,20 @@ class Playground:
         robot_model,
         mark,
         record_video,
-        gamepad=False,
+        controller,
         pybullet_client=None,
     ):
         self._robot_model = robot_model
         self._mark = mark
         self._record_video = record_video
-        self._gamepad = gamepad
+        self._controller = controller
 
-        if self._gamepad:
+        if self._controller == 'gamepad':
             gamepad = xbox_one_pad.XboxGamepad()
             self._command_function = gamepad.get_command
+        elif self._controller == 'keyboard':
+            keys = keyboard.Keyboard()
+            self._command_function = keys.get_command
 
         # Create the simulation
         self._create_simulation(False, pybullet_client, robot_model, mark, "plane", None)
@@ -79,7 +83,7 @@ class Playground:
         return refresh_terrain, args
 
     def _parse_ctrl_input(self):
-        if self._gamepad:
+        if self._controller:
             # read gamepad input
             vx, _, wz = self._command_function()
         else:

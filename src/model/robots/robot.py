@@ -118,8 +118,8 @@ class Robot:
     
     def apply_action(self, motor_commands):
         """Apply motion command to TurtleBot3."""
-        linear_velocity = motor_commands[0] * self._constants.MAX_LIN_VEL
-        angular_velocity = motor_commands[1] * self._constants.MAX_ANG_VEL
+        linear_velocity  =  motor_commands[0] * self._constants.MAX_LIN_VEL
+        angular_velocity =  motor_commands[1] * self._constants.MAX_ANG_VEL
 
         L = self._constants.WHEEL_SEPARATION
         R = self._constants.WHEEL_RADIUS

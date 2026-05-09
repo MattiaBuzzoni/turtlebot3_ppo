@@ -1,7 +1,4 @@
-"""
-	This file contains a neural network module for us to
-	define our actor and critic networks in PPO.
-"""
+"""This file contains a neural network module. It define our actor and critic networks in PPO."""
 
 import torch
 import numpy as np
@@ -15,7 +12,7 @@ class ResBlock(nn.Module):
     def __init__(self,
                  Fin,
                  Fout,
-                 n_neurons=256):
+                 n_neurons=512):
 
         super(ResBlock, self).__init__()
         self.Fin = Fin
@@ -61,7 +58,7 @@ class NetActor(nn.Module):
 
         self.rb1 = ResBlock(in_dim, in_dim)
         self.rb2 = ResBlock(in_dim + in_dim, in_dim + in_dim)
-        # self.rb3 = ResBlock(n_neurons + in_dim, n_neurons)
+        self.rb3 = ResBlock(n_neurons + in_dim, n_neurons)
 
         self.out1 = nn.Linear(in_dim + in_dim, out_dim - 1)
         nn.init.orthogonal_(self.out1.weight, gain=0.01)

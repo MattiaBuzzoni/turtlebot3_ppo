@@ -51,7 +51,7 @@ class GoEnv(robot_gym_env.RobotGymEnv):
         self._random_target = True if self._target_position is None else False
 
         # Maximum episode time in seconds
-        self._max_time = 90
+        self._max_time = 100
 
         self.prev_pos = ((0., 0.), 0.)
         self.pos = ((0., 0.), 0.)
@@ -73,8 +73,8 @@ class GoEnv(robot_gym_env.RobotGymEnv):
             self._build_world(True)
 
     def _build_action_space(self):
-        self.action_space = spaces.Box(low=np.array([-1.0, -1.0], dtype=np.float32),
-                                       high=np.array([1.0, 1.0], dtype=np.float32))
+        self.action_space = spaces.Box(low=np.array([-1., -1.], dtype=np.float32),
+                                       high=np.array([1., 1.], dtype=np.float32))
         
     def _build_observation_space(self):
         self.observation_space = spaces.Box(
@@ -116,7 +116,6 @@ class GoEnv(robot_gym_env.RobotGymEnv):
         dy = self._target_position[1] - y
 
         rel_theta = math.atan2(dy, dx)
-
         diff_angle = (yaw - rel_theta + math.pi) % (2 * math.pi) - math.pi
 
         return yaw, rel_theta, diff_angle

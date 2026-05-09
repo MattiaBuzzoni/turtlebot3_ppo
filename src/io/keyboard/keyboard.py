@@ -31,7 +31,7 @@ class Keyboard:
             k = key.char if hasattr(key, 'char') else key
             if k not in self.pressed_keys:
                 self.pressed_keys.add(k)
-                self._update_commands() # Chiamata corretta
+                self._update_commands() 
         except Exception:
             pass
 
@@ -40,7 +40,7 @@ class Keyboard:
             k = key.char if hasattr(key, 'char') else key
             if k in self.pressed_keys:
                 self.pressed_keys.remove(k)
-            self._update_commands() # Chiamata corretta
+            self._update_commands() 
         except Exception:
             pass
 
@@ -56,7 +56,8 @@ class Keyboard:
             
         if self.estop_flagged:
             self.vx, self.vy, self.wz = 0., 0., 0.
-            return
+            self.estop_flagged = False
+            vx, _, wz = None
 
         if 'w' in self.pressed_keys:
             new_vx = self._vel_scale_x
@@ -70,6 +71,10 @@ class Keyboard:
             new_wz = -self._vel_scale_rot
 
         self.vx, self.vy, self.wz = new_vx, new_vy, new_wz
+
+    def get_command(self):
+        # del time_since_reset  # unused
+        return self.vx, self.vy, self.wz
 
     def stop(self):
         self.is_running = False
@@ -88,7 +93,7 @@ def main(_):
         pass
     finally:
         controller.stop()
-        print("\nScript terminato.")
+        print("\nExit.")
 
 if __name__ == "__main__":
     app.run(main)

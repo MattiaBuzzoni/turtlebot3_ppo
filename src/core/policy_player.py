@@ -6,7 +6,6 @@ import torch
 
 
 from src.agents.ppo import ppo
-from src.agents.ppo.scripts import utility
 from src.utils.cli import flags
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -32,12 +31,13 @@ class PolicyPlayer:
 
     def play(self):
         policy_id = f"{self._env_id}"
-        policy_path = flags.ENV_ID_TO_POLICY[policy_id][0]
-        self._actor.load_state_dict(torch.load(policy_path))
+        policy_dir, policy_file = flags.ENV_ID_TO_POLICY[policy_id]
+        policy_path = os.path.join(policy_dir, policy_file)
+        self._actor.load_state_dict(torch.load(policy_path, map_location=device, weights_only=True))
 
         with torch.no_grad():
             sum_rewards = 0
-            observation, _ = torch.tensor(self._agent._env.reset(), dtype=torch.float32).to(device)
+            observation, _ = self._agent._env.reset()
 
             while True:
                 action = self._actor(observation)

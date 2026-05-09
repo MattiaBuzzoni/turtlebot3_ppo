@@ -71,7 +71,6 @@ class PPO(Agent):
         self._cov_var = torch.full(size=(self._act_dim,), fill_value=0.8).to(device)
         self._cov_mat = torch.diag(self._cov_var).to(device)
 
-
     
     def _create_environment(self, config):
         """Constructor for an instance of the environment."""
@@ -208,7 +207,7 @@ class PPO(Agent):
                 batch_rews.append(ep_rews)
                 ep_rews = []
                 if one_round != 0:
-                    print('Step: %3i' % one_round, '| avg_reward:{:.2f}'.format(episode_reward / one_round),
+                    print('Step: %3i' % one_round, '| Avg. Reward:{:.2f}'.format(episode_reward / one_round),
                           '| Time step: %i' % (t_so_far + np.sum(batch_lens)))
                 episode_reward = 0
                 one_round = 0
@@ -326,7 +325,7 @@ class PPO(Agent):
         # This segment of code is similar to that in get_action()
         mean = self._actor(batch_obs)
         mean = torch.stack([
-            torch.clamp(mean[:, 0], 0, 1),
+            torch.clamp(mean[:, 0], -1, 1),
             torch.clamp(mean[:, 1], -1, 1)
         ], dim=1)
         dist = MultivariateNormal(mean, self._cov_mat)
