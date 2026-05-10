@@ -221,6 +221,7 @@ class GoEnv(robot_gym_env.RobotGymEnv):
         if d_goal > 0.5 or d_goal <= 0:
             reward = -10
         elif 0 < d_goal <= 0.5:
+            d_goal = d_goal * 100
             reward = 200. * d_goal * (1 - 4 * np.abs(0.5 - np.mod((A/np.pi), 1)))
 
         return reward 

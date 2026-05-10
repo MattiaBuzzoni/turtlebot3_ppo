@@ -43,7 +43,6 @@ class RobotGymEnv(gym.Env, ABC):
                                       mark=mark)
         
         self._on_rack = on_rack
-        self.seed()
         
     @property
     def simulation(self):
@@ -68,26 +67,21 @@ class RobotGymEnv(gym.Env, ABC):
     def close(self):
         self._simulation.robot.terminate()
 
-    def reset(self, **kwargs):
+    def reset(self, seed=42, option=None):
+        super().reset(seed=seed)
+
         #print("reset simulation")
         self.simulation.reset()
 
         if self.simulation.terrain.terrain_type != "plane":
             self.simulation.terrain.update_terrain()
-
-        if "position" in kwargs:
-            position = kwargs["position"]
-        else:
-            position = self._simulation.robot.get_constants().START_POS
-
+        
         # Get terrain offset
         z_offset = self.simulation.terrain.get_terrain_z_offset()
+        position = self._simulation.robot.get_constants().START_POS
         position = [position[0], position[1], position[2] + z_offset]
 
-        if "orientation" in kwargs:
-            orientation = [0, 0, kwargs["orientation"]]
-        else:
-            orientation = self._simulation.robot.get_constants().INIT_ORIENTATION
+        orientation = self._simulation.robot.get_constants().INIT_ORIENTATION
 
         self._simulation.pybullet_client.resetBasePositionAndOrientation(
             self._simulation.robot.get_robot_id,
@@ -96,11 +90,6 @@ class RobotGymEnv(gym.Env, ABC):
         )
 
         return self.get_observation(), {}
-    
-    def seed(self, seed=None):
-        self.np_random, seed = seeding.np_random(seed)
-
-        return [seed]
     
     def step(self, action, **kwargs):
         """Step forward the simulation, given the action."""
