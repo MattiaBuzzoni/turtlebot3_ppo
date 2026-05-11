@@ -1,11 +1,13 @@
-from absl import app
+"""Interface for reading commands from keyboard."""
 
-import threading
+from __future__ import annotations
+
 import time
+from absl import app
 from pynput import keyboard
+from pynput.keyboard import Key
 
 class Keyboard:
-    """Interface for reading commands for the keyboard."""
 
     def __init__(self, vel_scale_x: float = .4, vel_scale_y: float = .4, vel_scale_rot: float = .4):
         self._vel_scale_x = vel_scale_x
@@ -35,6 +37,7 @@ class Keyboard:
         except Exception:
             pass
 
+
     def _on_release(self, key):
         try:
             k = key.char if hasattr(key, 'char') else key
@@ -44,11 +47,15 @@ class Keyboard:
         except Exception:
             pass
 
-        if key == keyboard.Key.esc:
+        if key == Key.esc:
             self.stop()
 
     def _update_commands(self):
         new_vx, new_vy, new_wz = 0., 0., 0.
+
+        # Press 'Ctrl + C' to exit
+        if (Key.ctrl_l or Key.ctrl_r) and 'c' in self.pressed_keys:
+            self.stop()
 
         # E-Stop: 'q'
         if 'q' in self.pressed_keys:
@@ -59,21 +66,19 @@ class Keyboard:
             self.estop_flagged = False
             vx, _, wz = None
 
-        if 'w' in self.pressed_keys:
+        if any(k in self.pressed_keys for k in ['w', Key.up]):
             new_vx = self._vel_scale_x
-        elif 's' in self.pressed_keys:
+        elif any(k in self.pressed_keys for k in ['s', Key.down]):
             new_vx = -self._vel_scale_x 
 
-        # Rotazione (A/D) -> Yaw (wz)
-        if 'a' in self.pressed_keys:
+        if any(k in self.pressed_keys for k in ['a', Key.left]):
             new_wz = self._vel_scale_rot
-        elif 'd' in self.pressed_keys:
+        elif any(k in self.pressed_keys for k in ['d', Key.right]):
             new_wz = -self._vel_scale_rot
 
         self.vx, self.vy, self.wz = new_vx, new_vy, new_wz
 
     def get_command(self):
-        # del time_since_reset  # unused
         return self.vx, self.vy, self.wz
 
     def stop(self):
@@ -82,7 +87,7 @@ class Keyboard:
 
 def main(_):
     controller = Keyboard()
-    print("Comandi: W/S (Avanti/Indietro), A/D (Rotazione), Q (E-Stop), ESC (Esci)")
+    print("Commands: W/S (Forward/Backward), A/D (Rotate), Q (E-Stop), ESC/Ctrl + C (Exit)")
     
     try:
         while controller.is_running:
@@ -93,7 +98,6 @@ def main(_):
         pass
     finally:
         controller.stop()
-        print("\nExit.")
 
 if __name__ == "__main__":
     app.run(main)

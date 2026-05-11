@@ -1,0 +1,22 @@
+[project]
+name="turtlebot3_ppo"
+version="0.1.0"
+
+description = "Navigation environment for TurtleBot3."
+readme = "README.md"
+requires-python = ">=3.12"
+
+dependencies = [
+    "pynput==1.8.1",
+    "absl-py==2.4.0",
+    "click==8.3.3",
+    "gymnasium",
+    "pybullet",
+    "torch",
+    "torchvision",
+    "torchaudio",
+    "numpy<2",
+]
+
+[project.scripts]
+turtlebot3 = "src.cli.entry_point:cli"
