@@ -26,6 +26,8 @@ def default():
     lr = 2e-4
 
     gamma = 0.99 
+    lamb = 0.95
+    entropy = 0.01
     clip = 0.2 
     save_freq = 2
     use_gpu = True 

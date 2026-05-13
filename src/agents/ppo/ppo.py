@@ -87,7 +87,7 @@ class PPO(Agent):
         value_func = []
         while t_so_far < config.total_timesteps:  # ALG STEP 2
             # Autobots, roll out (just kidding, we're collecting our batch simulations here)
-            batch_obs, batch_acts, batch_log_probs, batch_rtgs, batch_lens = self._rollout(t_so_far, config)  # ALG STEP 3
+            batch_obs, batch_acts, batch_log_probs, batch_rews, batch_rtgs, batch_lens = self._rollout(t_so_far, config)  # ALG STEP 3
 
             # Calculate how many timesteps we collected this batch
             t_so_far += np.sum(batch_lens)
@@ -96,7 +96,7 @@ class PPO(Agent):
             i_so_far += 1
 
             # Calculate advantage at k-th iteration
-            self.V, _ = self._evaluate(batch_obs, batch_acts, config)
+            self.V, _, _ = self._evaluate(batch_obs, batch_acts, config)
             value_func.append(self.V.detach().mean())
             A_k = batch_rtgs - self.V.detach()  # ALG STEP 5
 
@@ -109,15 +109,11 @@ class PPO(Agent):
             # This is the loop where we update our network for some n epochs
             for _ in range(config.n_updates_per_iteration):  # ALG STEP 6 & 7
                 # Calculate V_phi and pi_theta(a_t | s_t)
-                self.V, curr_log_probs = self._evaluate(batch_obs, batch_acts, config)
+                self.V, curr_log_probs, entropy = self._evaluate(batch_obs, batch_acts, config)
 
                 # Calculate the ratio pi_theta(a_t | s_t) / pi_theta_k(a_t | s_t)
                 # NOTE: we just subtract the logs, which is the same as
                 # dividing the values and then canceling the log with e^log.
-                # For why we use log probabilities instead of actual probabilities,
-                # here's a great explanation:
-                # https://cs.stackexchange.com/questions/70518/why-do-we-use-the-log-in-gradient-based-reinforcement-algorithms
-                # TL;DR makes gradient ascent easier behind the scenes.
                 ratios = torch.exp(curr_log_probs - batch_log_probs)
 
                 # Calculate surrogate losses.
@@ -128,7 +124,14 @@ class PPO(Agent):
                 # NOTE: we take the negative min of the surrogate losses because we're trying to maximize
                 # the performance function, but Adam minimizes the loss. So minimizing the negative
                 # performance function maximizes it.
+                # NOTE: If self.cov_mat is a diagonal matrix, the entropy (H) 
+                # formula simplifies to the sum of the logs of the standard deviations:
+                # H ∝ Σ ln(σ_i)
+                # Adding this to the loss prevents the standard deviations (σ) from 
+                # collapsing to zero too quickly, encouraging exploration.
+                entropy_loss = entropy.mean()
                 actor_loss = (-torch.min(surr1, surr2)).mean()
+                actor_loss = actor_loss - config.entropy * entropy_loss
                 critic_loss = nn.MSELoss()(self.V, batch_rtgs)
                 # weihgts = self.actor.parameters()
                 # w1_res1_actor0 = weihgts.gi_frame.f_locals['self'].rb1.fc1.weight
@@ -176,6 +179,8 @@ class PPO(Agent):
         batch_rews = []
         batch_rtgs = []
         batch_lens = []
+        batch_vals = []
+        batch_dones = []
 
         # Reset the environment. Note that obs is short for observation.
         obs, info = self._env.reset()
@@ -183,14 +188,18 @@ class PPO(Agent):
         episode_reward = 0
         one_round = 0
         ep_rews = []
+        ep_vals = []
+        ep_dones = []
         # while t < self.timesteps_per_batch:
         for t in range(config.timesteps_per_batch):
 
             # Track observations in this batch
             batch_obs.append(obs)
+            ep_dones.append(done)
             # Calculate action and make a step in the env.
             # Note that rew is short for reward.
             action, log_prob = self._get_action(obs, t_so_far, one_round, config)
+            val = self._critic(obs)
             # old state as input because of reward function
             obs, reward, terminated, truncated, info = self._env.step(action)
             done = terminated or truncated
@@ -198,6 +207,7 @@ class PPO(Agent):
             episode_reward += reward
             # Track recent reward, action, and action log probability
             ep_rews.append(reward)
+            ep_vals.append(val)
             batch_acts.append(action)
             batch_log_probs.append(log_prob)
             # t += 1 		# Increment timesteps ran this batch so far
@@ -221,6 +231,8 @@ class PPO(Agent):
 
         # Track episodic lengths and rewards
         batch_rews.append(ep_rews)
+        batch_vals.append(ep_vals)
+        batch_dones.append(ep_dones)
         # if one_round != 0:
         # 	print('Step: %3i' % one_round, '| avg_reward:{:.2f}'.format(episode_reward / one_round),
         # 		  '| Time step: %i' % (t_so_far + np.sum(batch_lens)), '|', result)
@@ -236,9 +248,9 @@ class PPO(Agent):
         batch_rtgs = self._compute_rtgs(batch_rews, config).to(device)
 
         # ALG STEP 4
-        return batch_obs, batch_acts, batch_log_probs, batch_rtgs, batch_lens
+        return batch_obs, batch_acts, batch_log_probs, batch_rews, batch_rtgs, batch_lens
 
-    def _compute_rtgs(self, batch_rews, config):
+    def _compute_rtgs(self, rewards, config):
         """
 			Compute the Reward-To-Go of each timestep in a batch given the rewards.
 
@@ -253,7 +265,7 @@ class PPO(Agent):
         batch_rtgs = []
 
         # Iterate through each episode
-        for ep_rews in reversed(batch_rews):
+        for ep_rews in reversed(rewards):
 
             discounted_reward = 0  # The discounted reward so far
 
@@ -263,10 +275,28 @@ class PPO(Agent):
                 discounted_reward = rew + discounted_reward * config.gamma
                 batch_rtgs.insert(0, discounted_reward)
 
-        # Convert the rewards-to-go into a tensor
-        batch_rtgs = torch.tensor(batch_rtgs, dtype=torch.float)
+        return torch.tensor(batch_rtgs, dtype=torch.float)
 
-        return batch_rtgs
+    def _compute_gae(self, rewards, values, dones, config):
+            """Compute the GAE Advantage of each timestep in a batch given the rewards."""
+            batch_advantages = []
+            for ep_rews, ep_vals, ep_dones in zip(rewards, values, dones):
+                advantages = []
+                last_advantage = 0
+
+                for t in reversed(range(len(ep_rews))):
+                    if t + 1 < len(ep_rews):
+                        delta = ep_rews[t] + config.gamma * ep_vals[t+1] * config.lamb * (1 - ep_dones[t]) * last_advantage
+                    else:
+                        delta = ep_rews[t] - ep_vals[t]
+
+                    advantage = delta + config.gamma * config.lamb * (1 - ep_dones[t]) * last_advantage
+                    last_advantage = advantage
+                    advantages.insert(0, advantage)
+
+                batch_advantages.extend(advantages)
+
+            return torch.tensor(batch_advantages, dtype=torch.float)
 
     def _get_action(self, obs, t_so_far, one_round, config):
         """
@@ -332,7 +362,7 @@ class PPO(Agent):
         log_probs = dist.log_prob(batch_acts)
         # Return the value vector V of each observation in the batch
         # and log probabilities log_probs of each action in the batch
-        return self.V, log_probs
+        return self.V, log_probs, dist.entropy()
 
 
     def train(self):
@@ -341,4 +371,3 @@ class PPO(Agent):
         full_logdir = os.path.expanduser(os.path.join(self._log_dir, '{}-{}'.format(timestamp, self._env_id)))
 
         self._learn(self._config)
-
