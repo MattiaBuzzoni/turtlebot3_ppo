@@ -17,7 +17,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from torch.optim import Adam
-from torch.distributions import MultivariateNormal
+from torch.distributions import Normal
 
 from src.agents.agent import Agent
 from src.agents.ppo.net_actor import NetActor
@@ -54,7 +54,7 @@ class PPO(Agent):
 
         self._config = AttrDict(getattr(configs, self._env_id)())
         
-        # Extractenvironment information
+        # Extract environment information
         self._env = self._create_environment(self._config)
         self._obs_dim = self._env.observation_space.shape[0]
         self._act_dim = self._env.action_space.shape[0]
@@ -67,11 +67,7 @@ class PPO(Agent):
         self._actor_optim = Adam(self._actor.parameters(), lr=self._config.lr)
         self._critic_optim = Adam(self._critic.parameters(), lr=self._config.lr)
 
-        # Initialize the covariance matrix used to query the actor for actions
-        self._cov_var = torch.full(size=(self._act_dim,), fill_value=0.8).to(device)
-        self._cov_mat = torch.diag(self._cov_var).to(device)
 
-    
     def _create_environment(self, config):
         """Constructor for an instance of the environment."""
         env = gym.make(config.env, **self._env_args)
@@ -96,7 +92,7 @@ class PPO(Agent):
             i_so_far += 1
 
             # Calculate advantage at k-th iteration
-            self.V, _, _ = self._evaluate(batch_obs, batch_acts, config)
+            self.V, _, _ = self._evaluate(batch_obs, batch_acts)
             value_func.append(self.V.detach().mean())
             A_k = batch_rtgs - self.V.detach()  # ALG STEP 5
 
@@ -109,7 +105,7 @@ class PPO(Agent):
             # This is the loop where we update our network for some n epochs
             for _ in range(config.n_updates_per_iteration):  # ALG STEP 6 & 7
                 # Calculate V_phi and pi_theta(a_t | s_t)
-                self.V, curr_log_probs, entropy = self._evaluate(batch_obs, batch_acts, config)
+                self.V, curr_log_probs, entropy = self._evaluate(batch_obs, batch_acts)
 
                 # Calculate the ratio pi_theta(a_t | s_t) / pi_theta_k(a_t | s_t)
                 # NOTE: we just subtract the logs, which is the same as
@@ -198,7 +194,7 @@ class PPO(Agent):
             ep_dones.append(done)
             # Calculate action and make a step in the env.
             # Note that rew is short for reward.
-            action, log_prob = self._get_action(obs, t_so_far, one_round, config)
+            action, log_prob = self._get_action(obs, t_so_far, one_round)
             val = self._critic(obs)
             # old state as input because of reward function
             obs, reward, terminated, truncated, info = self._env.step(action)
@@ -298,7 +294,7 @@ class PPO(Agent):
 
             return torch.tensor(batch_advantages, dtype=torch.float)
 
-    def _get_action(self, obs, t_so_far, one_round, config):
+    def _get_action(self, obs, t_so_far, one_round):
         """
 			Queries an action from the actor network, should be called from rollout.
 
@@ -311,28 +307,21 @@ class PPO(Agent):
 		"""
         self.t_step = one_round
         # Query the actor network for a mean action
-        mean = self._actor(obs)
+        mean, log_std = self._actor(obs)
+        std = log_std.exp()
 
-        # Create a distribution with the mean action and std from the covariance matrix above.
-        # For more information on how this distribution works, check out Andrew Ng's lecture on it:
-        # https://www.youtube.com/watch?v=JjB58InuTqM
-        if self.t_step == 0 and t_so_far > 50000 and self._cov_mat[0][0] >= 0.1:
-            self._cov_mat *= 0.995
-        dist = MultivariateNormal(mean, self._cov_mat)
+        dist = Normal(mean, std)
 
         # Sample an action from the distribution
         action = dist.sample()
-        action = torch.stack([
-            torch.clamp(action[0], -1, 1),
-            torch.clamp(action[1], -1, 1)
-        ])
+        action = torch.clamp(action, -1, 1)
         # Calculate the log probability for that action
-        log_prob = dist.log_prob(action)
+        log_prob = dist.log_prob(action).sum(dim=-1, keepdim=True)
 
         # Return the sampled action and the log probability of that action in our distribution
         return action.detach().cpu().numpy(), log_prob.detach()
 
-    def _evaluate(self, batch_obs, batch_acts, config):
+    def _evaluate(self, batch_obs, batch_acts):
         """
 			Estimate the values of each observation, and the log probs of
 			each action in the most recent batch with the most recent
@@ -353,13 +342,12 @@ class PPO(Agent):
 
         # Calculate the log probabilities of batch actions using most recent actor network.
         # This segment of code is similar to that in get_action()
-        mean = self._actor(batch_obs)
-        mean = torch.stack([
-            torch.clamp(mean[:, 0], -1, 1),
-            torch.clamp(mean[:, 1], -1, 1)
-        ], dim=1)
-        dist = MultivariateNormal(mean, self._cov_mat)
-        log_probs = dist.log_prob(batch_acts)
+        mean, log_std = self._actor(batch_obs)
+        std = log_std.exp()
+        mean = torch.clamp(mean[:, 0], -1, 1)
+        
+        dist = Normal(mean, std)
+        log_probs = dist.log_prob(batch_acts).sum(dim=-1, keepdim=True)
         # Return the value vector V of each observation in the batch
         # and log probabilities log_probs of each action in the batch
         return self.V, log_probs, dist.entropy()
