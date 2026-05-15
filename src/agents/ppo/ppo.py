@@ -17,7 +17,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from torch.optim import Adam
-from torch.distributions import Normal
+from torch.distributions import MultivariateNormal
 
 from src.agents.agent import Agent
 from src.agents.ppo.net_actor import NetActor
@@ -67,6 +67,10 @@ class PPO(Agent):
         self._actor_optim = Adam(self._actor.parameters(), lr=self._config.lr)
         self._critic_optim = Adam(self._critic.parameters(), lr=self._config.lr)
 
+        # Initialize the covariance matrix used to query the actor for actions
+        self._cov_var = torch.full(size=(self._act_dim,), fill_value=0.8).to(device)
+        self._cov_mat = torch.diag(self._cov_var).to(device)
+
 
     def _create_environment(self, config):
         """Constructor for an instance of the environment."""
@@ -83,8 +87,8 @@ class PPO(Agent):
         value_func = []
         while t_so_far < config.total_timesteps:  # ALG STEP 2
             # Autobots, roll out (just kidding, we're collecting our batch simulations here)
-            batch_obs, batch_acts, batch_log_probs, batch_rews, batch_rtgs, batch_lens = self._rollout(t_so_far, config)  # ALG STEP 3
-
+            batch_obs, batch_acts, batch_log_probs, batch_rews, batch_lens, batch_vals, batch_dones = self._rollout(t_so_far, config)  # ALG STEP 3
+        
             # Calculate how many timesteps we collected this batch
             t_so_far += np.sum(batch_lens)
 
@@ -92,9 +96,13 @@ class PPO(Agent):
             i_so_far += 1
 
             # Calculate advantage at k-th iteration
+            
+            A_k = self._compute_gae(batch_rews, batch_vals, batch_dones, config)
+            A_k = A_k.view(-1)
             self.V, _, _ = self._evaluate(batch_obs, batch_acts)
+            self.V = self.V.view(-1)
             value_func.append(self.V.detach().mean())
-            A_k = batch_rtgs - self.V.detach()  # ALG STEP 5
+            batch_rtgs = A_k + self.V.detach()  # ALG STEP 5
 
             # One of the only tricks I use that isn't in the pseudocode. Normalizing advantages
             # isn't theoretically necessary, but in practice it decreases the variance of
@@ -173,7 +181,7 @@ class PPO(Agent):
         batch_acts = []
         batch_log_probs = []
         batch_rews = []
-        batch_rtgs = []
+        #batch_rtgs = []
         batch_lens = []
         batch_vals = []
         batch_dones = []
@@ -195,7 +203,7 @@ class PPO(Agent):
             # Calculate action and make a step in the env.
             # Note that rew is short for reward.
             action, log_prob = self._get_action(obs, t_so_far, one_round)
-            val = self._critic(obs)
+            val = self._critic(obs).detach().item()
             # old state as input because of reward function
             obs, reward, terminated, truncated, info = self._env.step(action)
             done = terminated or truncated
@@ -206,12 +214,19 @@ class PPO(Agent):
             ep_vals.append(val)
             batch_acts.append(action)
             batch_log_probs.append(log_prob)
+
             # t += 1 		# Increment timesteps ran this batch so far
             one_round += 1
+
             if done or one_round >= config.max_timesteps_per_episode:
                 batch_lens.append(one_round)
+                batch_dones.append(ep_dones)
                 batch_rews.append(ep_rews)
+                batch_vals.append(ep_vals)
+
                 ep_rews = []
+                ep_vals = []
+                ep_dones = []
                 if one_round != 0:
                     print('Step: %3i' % one_round, '| Avg. Reward:{:.2f}'.format(episode_reward / one_round),
                           '| Time step: %i' % (t_so_far + np.sum(batch_lens)))
@@ -225,10 +240,7 @@ class PPO(Agent):
             # 	self.env.render()
             # If the environment tells us the episode is terminated, break
 
-        # Track episodic lengths and rewards
-        batch_rews.append(ep_rews)
-        batch_vals.append(ep_vals)
-        batch_dones.append(ep_dones)
+        
         # if one_round != 0:
         # 	print('Step: %3i' % one_round, '| avg_reward:{:.2f}'.format(episode_reward / one_round),
         # 		  '| Time step: %i' % (t_so_far + np.sum(batch_lens)), '|', result)
@@ -236,6 +248,11 @@ class PPO(Agent):
         # 	self.logger['Episode_Rewards'].append(episode_reward / one_round)
 
         episode_rewards = []
+        if one_round > 0:
+            batch_lens.append(one_round)
+            batch_dones.append(ep_dones)
+            batch_rews.append(ep_rews)
+            batch_vals.append(ep_vals)
 
         # Reshape data as tensors in the shape specified in function description, before returning
         batch_obs = torch.tensor(np.array(batch_obs), dtype=torch.float).to(device)
@@ -244,7 +261,7 @@ class PPO(Agent):
         batch_rtgs = self._compute_rtgs(batch_rews, config).to(device)
 
         # ALG STEP 4
-        return batch_obs, batch_acts, batch_log_probs, batch_rews, batch_rtgs, batch_lens
+        return batch_obs, batch_acts, batch_log_probs, batch_rews, batch_lens, batch_vals, batch_dones
 
     def _compute_rtgs(self, rewards, config):
         """
@@ -282,7 +299,7 @@ class PPO(Agent):
 
                 for t in reversed(range(len(ep_rews))):
                     if t + 1 < len(ep_rews):
-                        delta = ep_rews[t] + config.gamma * ep_vals[t+1] * config.lamb * (1 - ep_dones[t]) * last_advantage
+                        delta = ep_rews[t] + config.gamma * ep_vals[t+1] * (1 - ep_dones[t+1]) - ep_vals[t]
                     else:
                         delta = ep_rews[t] - ep_vals[t]
 
@@ -292,7 +309,7 @@ class PPO(Agent):
 
                 batch_advantages.extend(advantages)
 
-            return torch.tensor(batch_advantages, dtype=torch.float)
+            return torch.tensor(batch_advantages, dtype=torch.float).to(device)
 
     def _get_action(self, obs, t_so_far, one_round):
         """
@@ -310,13 +327,15 @@ class PPO(Agent):
         mean, log_std = self._actor(obs)
         std = log_std.exp()
 
-        dist = Normal(mean, std)
+        if self.t_step == 0 and t_so_far > 50000 and self._cov_mat[0][0] >= 0.1:
+            self._cov_mat *= 0.995
+        dist = MultivariateNormal(mean, self._cov_mat)
 
         # Sample an action from the distribution
         action = dist.sample()
         action = torch.clamp(action, -1, 1)
         # Calculate the log probability for that action
-        log_prob = dist.log_prob(action).sum(dim=-1, keepdim=True)
+        log_prob = dist.log_prob(action).unsqueeze(-1)
 
         # Return the sampled action and the log probability of that action in our distribution
         return action.detach().cpu().numpy(), log_prob.detach()
@@ -344,10 +363,10 @@ class PPO(Agent):
         # This segment of code is similar to that in get_action()
         mean, log_std = self._actor(batch_obs)
         std = log_std.exp()
-        mean = torch.clamp(mean[:, 0], -1, 1)
+        mean = torch.clamp(mean, -1, 1)
         
-        dist = Normal(mean, std)
-        log_probs = dist.log_prob(batch_acts).sum(dim=-1, keepdim=True)
+        dist = MultivariateNormal(mean, self._cov_mat)
+        log_probs = dist.log_prob(batch_acts).unsqueeze(-1)
         # Return the value vector V of each observation in the batch
         # and log probabilities log_probs of each action in the batch
         return self.V, log_probs, dist.entropy()

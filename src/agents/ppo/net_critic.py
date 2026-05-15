@@ -54,7 +54,7 @@ class NetCritic(nn.Module):
         self.bn1 = nn.BatchNorm1d(in_dim)
         self.rb1 = ResBlock(in_dim, in_dim)
         self.rb2 = ResBlock(in_dim + in_dim, in_dim + in_dim)
-        self.rb3 = ResBlock(n_neurons + in_dim, n_neurons)
+        #self.rb3 = ResBlock(n_neurons + in_dim, n_neurons)
         
         self.out = nn.Linear(in_dim + in_dim, out_dim)
 

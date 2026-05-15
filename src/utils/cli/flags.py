@@ -1,5 +1,5 @@
 ENV_ID_TO_POLICY = {
-    'go': ('src/policies/go/', 'ppo_actor_100.pth')
+    'go': ('src/policies/go/', 'ppo_actor_42.pth')
 }
 
 ENV_ID_TO_ENV = {
