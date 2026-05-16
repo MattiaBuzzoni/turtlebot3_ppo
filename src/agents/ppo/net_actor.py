@@ -57,13 +57,15 @@ class NetActor(nn.Module):
         super(NetActor, self).__init__()
 
         self.rb1 = ResBlock(in_dim, in_dim)
-        self.rb2 = ResBlock(in_dim + in_dim, in_dim + in_dim)
-        self.rb3 = ResBlock(n_neurons + in_dim, n_neurons)
+        self.rb2 = ResBlock(2 * in_dim, 2 * in_dim)
+        self.rb3 = ResBlock(3 * in_dim, 3 * in_dim)
 
-        self.out1 = nn.Linear(in_dim + in_dim, out_dim - 1)
+        self.out1 = nn.Linear(3 * in_dim, out_dim - 1)
         nn.init.orthogonal_(self.out1.weight, gain=0.01)
-        self.out2 = nn.Linear(in_dim + in_dim, out_dim - 1)
+        self.out2 = nn.Linear(3 * in_dim, out_dim - 1)
         nn.init.orthogonal_(self.out2.weight, gain=0.01)
+
+        self.log_std = nn.Parameter(torch.ones(out_dim) * -0.5)
 
     def forward(self, obs):
 
@@ -75,9 +77,13 @@ class NetActor(nn.Module):
         # X0 = self.bn1(X)
         X = self.rb1(X0, True)
         X = self.rb2(torch.cat([X0, X], dim=-1), True)
-        # X = self.rb3(torch.cat([X0, X], dim=-1), True)
+        X = self.rb3(torch.cat([X0, X], dim=-1), True)
 
-        output1 = torch.tanh(self.out1(X))
-        output2 = torch.tanh(self.out2(X))
-        output = torch.cat((output1, output2), -1)
-        return output
+        mu1 = torch.tanh(self.out1(X))
+        mu2 = torch.tanh(self.out2(X))
+
+        mean = torch.cat((mu1, mu2), -1)
+
+        log_std = self.log_std.expand_as(mean)
+
+        return mean, log_std 

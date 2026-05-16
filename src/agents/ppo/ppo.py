@@ -68,8 +68,8 @@ class PPO(Agent):
         self._critic_optim = Adam(self._critic.parameters(), lr=self._config.lr)
 
         # Initialize the covariance matrix used to query the actor for actions
-        self._cov_var = torch.full(size=(self._act_dim,), fill_value=0.8).to(device)
-        self._cov_mat = torch.diag(self._cov_var).to(device)
+        #self._cov_var = torch.full(size=(self._act_dim,), fill_value=0.8).to(device)
+        #self._cov_mat = torch.diag(self._cov_var).to(device)
 
     
     def _create_environment(self, config):
@@ -281,14 +281,15 @@ class PPO(Agent):
 		"""
         self.t_step = one_round
         # Query the actor network for a mean action
-        mean = self._actor(obs)
+        mean, log_std = self._actor(obs)
+        std = log_std.exp()
 
         # Create a distribution with the mean action and std from the covariance matrix above.
         # For more information on how this distribution works, check out Andrew Ng's lecture on it:
         # https://www.youtube.com/watch?v=JjB58InuTqM
-        if self.t_step == 0 and t_so_far > 50000 and self._cov_mat[0][0] >= 0.1:
-            self._cov_mat *= 0.995
-        dist = MultivariateNormal(mean, self._cov_mat)
+        #if self.t_step == 0 and t_so_far > 50000 and self._cov_mat[0][0] >= 0.1:
+        #    self._cov_mat *= 0.995
+        dist = MultivariateNormal(loc=mean, scale_tril=torch.diag_embed(std))
 
         # Sample an action from the distribution
         action = dist.sample()
@@ -323,12 +324,15 @@ class PPO(Agent):
 
         # Calculate the log probabilities of batch actions using most recent actor network.
         # This segment of code is similar to that in get_action()
-        mean = self._actor(batch_obs)
+        mean, log_std = self._actor(batch_obs)
+        std = log_std.exp()
+
         mean = torch.stack([
             torch.clamp(mean[:, 0], -1, 1),
             torch.clamp(mean[:, 1], -1, 1)
         ], dim=1)
-        dist = MultivariateNormal(mean, self._cov_mat)
+        
+        dist = MultivariateNormal(loc=mean, scale_tril=torch.diag_embed(std))
         log_probs = dist.log_prob(batch_acts)
         # Return the value vector V of each observation in the batch
         # and log probabilities log_probs of each action in the batch

@@ -40,7 +40,7 @@ class PolicyPlayer:
             observation, _ = self._agent._env.reset()
 
             while True:
-                action = self._actor(observation)
+                action, _ = self._actor(observation)
                 observation, reward, terminated, truncated, _ = self._agent._env.step(action)
                 done = terminated or truncated
                 time.sleep(0.002)

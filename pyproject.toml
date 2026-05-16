@@ -4,7 +4,7 @@ version="0.1.0"
 
 description = "Navigation environment for TurtleBot3."
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 
 dependencies = [
     "pynput==1.8.1",
@@ -19,4 +19,11 @@ dependencies = [
 ]
 
 [project.scripts]
-turtlebot3 = "src.cli.entry_point:cli"
+turtlebot3 = "cli.entry_point:cli"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["src*"]
