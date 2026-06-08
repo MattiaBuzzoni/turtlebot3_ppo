@@ -50,7 +50,12 @@ $$A = \left(0.5 \cdot (G_h + \pi)\right) \bmod 2\pi$$
  
 ### Reward cases
  
-$$r_t = \begin{cases} -10 & \text{if } \Delta d_t > 0.5 \text{ or } \Delta d_t \leq 0 \\[6pt] 200 \cdot (100\,\Delta d_t) \cdot \left(1 - 4\,\left|\,0.5 - \left(\dfrac{A}{\pi} \bmod 1\right)\right|\right) & \text{if } 0 < \Delta d_t \leq 0.5 \end{cases}$$
+$$r_t =
+\begin{cases}
+-10 & \text{if } \Delta d_t > 0.5 \text{ or } \Delta d_t \leq 0 \\
+200 \cdot (100\,\Delta d_t) \cdot \left(1 - 4\,\left|0.5 - \left(\dfrac{A}{\pi} \bmod 1\right)\right|\right)
+& \text{if } 0 < \Delta d_t \leq 0.5
+\end{cases}$$
  
 ### Intuition
  
