@@ -107,6 +107,7 @@ The inner factor $\left(1 - 4\left|0.5 - \frac{A}{\pi} \bmod 1\right|\right)$ is
 ## References
 
  - Taheri, Hamid, Seyed Rasoul Hosseini, and Mohammad Ali Nekoui. "Deep reinforcement learning with enhanced ppo for safe mobile robot navigation." arXiv preprint arXiv:2405.16266 (2024)
+ - Cheng, Ni, Zhong, Wei. "Autonomous Robot Goal Seeking and Collision Avoidance in the Physical World: An Automated Learning and Evaluation Framework Based on the PPO Method." Appl. Sci. 2024,  14, 11020. https://doi.org/10.3390/app142311020 
 
 ---
 
