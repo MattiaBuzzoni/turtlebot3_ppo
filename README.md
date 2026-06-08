@@ -1,4 +1,4 @@
-# TurtleBot3 Mapless Navigation with PPO
+# TurtleBot3 Navigation with PPO
 
 ## Overview
  
