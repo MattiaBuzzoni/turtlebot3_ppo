@@ -27,6 +27,24 @@ turtlebot3_ppo/
 ```
 
 ---
+
+ 
+## Observation & Action Space
+ 
+| Component | Description |
+|---|---|
+| LiDAR scans | N ray distances (normalized), representing proximity to obstacles |
+| Goal distance | Euclidean distance to target (normalized) |
+| Goal heading | Angle between robot orientation and target direction |
+| **Total observation** | `[lidar_rays..., distance, heading]` |
+ 
+| Action | Range | Description |
+|---|---|---|
+| Linear velocity | `[0, v_max]` | Forward speed |
+| Angular velocity | `[-ω_max, ω_max]` | Rotation rate |
+ 
+---
+
  
 ## Reward Function
  
