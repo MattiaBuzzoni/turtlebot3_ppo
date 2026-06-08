@@ -2,7 +2,7 @@
 
 ## Overview
  
-This project implements a **navigation** system for the TurtleBot3 Burger mobile robot using **deep reinforcement learning**. The agent learns to reach a target position in open space by processing relative goal information, without any prior map of the environment.
+This project implements a **navigation** system for the TurtleBot3 Burger mobile robot using **Deep Reinforcement Learning**. The agent learns to reach a target position in open space by processing relative goal information, without any prior map of the environment.
  
 The PPO algorithm is implemented **from scratch** in PyTorch, giving full control over the training loop, rollout buffer, and policy update logic. The simulation runs in **PyBullet**, with a custom Gymnasium-compatible environment wrapping the robot dynamics.
  
