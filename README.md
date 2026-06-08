@@ -82,8 +82,14 @@ The inner factor $\left(1 - 4\left|0.5 - \frac{A}{\pi} \bmod 1\right|\right)$ is
 - **positive and large** when the robot moves fast toward the target while aligned
 - **zero** at $90°$ misalignment regardless of speed
 - **negative** when moving backward or misaligned, or when $\Delta d_t$ falls outside the valid range
+
+
 ---
 
+## Background & Motivation
+
+This project was developed as a hands-on implementation of **Proximal Policy Optimization (PPO)** applied to a simulated robotic navigation task using PyBullet and TurtleBot3.
+The focus was on understanding the full RL loop — environment, reward design, and training dynamics — in a setting simple enough to iterate quickly, without adding unnecessary complexity like obstacles or multi-agent interactions.
 
 ---
  
