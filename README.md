@@ -8,8 +8,16 @@ The PPO algorithm is implemented **from scratch** in PyTorch, giving full contro
  
 The architecture is designed to be modular and extensible: adding walls and obstacles (LiDAR is already implemented) , or curriculum learning is a natural next step.
 
+---
+
+
+## Background & Motivation
+
+This project was developed as a hands-on implementation of **Proximal Policy Optimization (PPO)** applied to a simulated robotic navigation task using PyBullet and TurtleBot3.
+The focus was on understanding the full RL loop — environment, reward design, and training dynamics — in a setting simple enough to iterate quickly, without adding unnecessary complexity like obstacles or multi-agent interactions.
 
 ---
+
 
 ## Architecture
  
@@ -83,15 +91,8 @@ The inner factor $\left(1 - 4\left|0.5 - \frac{A}{\pi} \bmod 1\right|\right)$ is
 - **zero** at $90°$ misalignment regardless of speed
 - **negative** when moving backward or misaligned, or when $\Delta d_t$ falls outside the valid range
 
-
 ---
 
-## Background & Motivation
-
-This project was developed as a hands-on implementation of **Proximal Policy Optimization (PPO)** applied to a simulated robotic navigation task using PyBullet and TurtleBot3.
-The focus was on understanding the full RL loop — environment, reward design, and training dynamics — in a setting simple enough to iterate quickly, without adding unnecessary complexity like obstacles or multi-agent interactions.
-
----
  
 ## Roadmap
  
@@ -99,14 +100,16 @@ The focus was on understanding the full RL loop — environment, reward design, 
 - [ ] Add wall boundaries and confined arena
 - [ ] Curriculum learning: start with easy configurations, progressively increase difficulty
 - [ ] Multi-goal episodes
+      
 ---
+
 
 ## References
 
  - Taheri, Hamid, Seyed Rasoul Hosseini, and Mohammad Ali Nekoui. "Deep reinforcement learning with enhanced ppo for safe mobile robot navigation." arXiv preprint arXiv:2405.16266 (2024)
 
-
 ---
+
  
 ## License
  
