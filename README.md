@@ -1,6 +1,7 @@
 # TurtleBot3 Navigation with PPO
 
-https://github.com/user-attachments/assets/a93413e6-d300-413c-af16-07a267fec45e
+<img width="1920" height="1080" alt="ppo_1000" src="https://github.com/user-attachments/assets/7df5bf73-00b2-4da7-be34-4816a91e9505" />
+
 
 ## Overview
  
