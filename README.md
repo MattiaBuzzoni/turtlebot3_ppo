@@ -1,6 +1,6 @@
 # TurtleBot3 Navigation with PPO
 
-Demo: https://github.com/USER/REPO/releases/download/v1/ppo_1000.mp4
+https://github.com/user-attachments/assets/a93413e6-d300-413c-af16-07a267fec45e
 
 ## Overview
  
