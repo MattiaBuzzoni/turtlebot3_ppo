@@ -51,7 +51,7 @@ class GoEnv(robot_gym_env.RobotGymEnv):
         self._random_target = True if self._target_position is None else False
 
         # Maximum episode time in seconds
-        self._max_time = 100
+        self._max_time = 1000
 
         self.prev_pos = ((0., 0.), 0.)
         self.pos = ((0., 0.), 0.)
@@ -247,7 +247,8 @@ class GoEnv(robot_gym_env.RobotGymEnv):
         if "target" not in self.world_object:
             urdf_root = pybullet_data.getDataPath()
             self.world_object["target"] = self.simulation.pybullet_client.loadURDF(
-                f"{urdf_root}/world/objects/target/target.urdf"
+                f"{urdf_root}/world/objects/target/target.urdf",
+                useFixedBase=True
             )
 
         if self._random_target:

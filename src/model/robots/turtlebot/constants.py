@@ -3,7 +3,7 @@ import math
 import numpy as np
 
 
-START_POS = [0, 0, 0.05]
+START_POS = [0, 0, 0]
 INIT_ORIENTATION = [0, 0, 0]
 
 WHEEL_SEPARATION=0.16

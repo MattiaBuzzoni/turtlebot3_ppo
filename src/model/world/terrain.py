@@ -33,11 +33,15 @@ class Terrain:
     ) -> None:
         """Generate the ground of the environment base on the terrain type selected."""
         pybullet_client.setAdditionalSearchPath(pd.getDataPath())
-        pybullet_client.configureDebugVisualizer(pybullet_client.COV_ENABLE_RENDERING, 0)
+        pybullet_client.configureDebugVisualizer(pybullet_client.COV_ENABLE_RENDERING, 1)
+        pybullet_client.configureDebugVisualizer(pybullet_client.COV_ENABLE_SHADOWS, 1)
+        pybullet_client.configureDebugVisualizer(pybullet_client.COV_ENABLE_WIREFRAME, 0)
+        pybullet_client.configureDebugVisualizer(pybullet_client.COV_ENABLE_RGB_BUFFER_PREVIEW, 0)
+        pybullet_client.configureDebugVisualizer(pybullet_client.COV_ENABLE_VR_RENDER_CONTROLLERS, 0)
 
         if self.terrain_type == 'plane':
             self.id = pybullet_client.loadURDF("plane.urdf")
-            pybullet_client.changeVisualShape(self.id, -1, rgbaColor=[.9, .9, .9, 1])
+            pybullet_client.changeVisualShape(self.id, -1, rgbaColor=[1., 1., 1., 0.])
     
     @staticmethod
     def setup_ui_params(pybullet_client: Any) -> dict[str, Any]:

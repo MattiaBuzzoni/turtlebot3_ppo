@@ -1,7 +1,7 @@
 import pybullet
 import pybullet_data as pd
 import numpy as np
-from pybullet_utils import bullet_client
+from src.utils import bullet_client
 
 from src.core import sim_constants
 from src.model.world.terrain import Terrain
@@ -190,8 +190,12 @@ class Simulation:
             pybullet_client.connect(pybullet.GUI,
                                     options=f"--width={sim_constants.RENDER_WIDTH} "
                                             f"--height={sim_constants.RENDER_HEIGHT} "
-                                            f"--mp4=\"test.mp4\" --mp4fps=100")
-            pybullet_client.configureDebugVisualizer(pybullet.COV_ENABLE_SINGLE_STEP_RENDERING, 1)
+                                            "--background_color_red=0.5 "
+                                            "--background_color_green=0.5 "
+                                            "--background_color_blue=0.5"
+                                            f"--mp4=\"test.mp4\" --mp4fps=60")
+
+            pybullet_client.startStateLogging(pybullet.STATE_LOGGING_VIDEO_MP4, "test.mp4")
         else:
             if self._is_render:
                 pybullet_client = bullet_client.BulletClient(connection_mode=pybullet.GUI)

@@ -48,7 +48,8 @@ class PPO(Agent):
         # assert(type(env.observation_space) == gym.spaces.Box)
         # assert(type(env.action_space) == gym.spaces.Box)
         self._env_id = env_id
-        self._args = env_args
+        self._env_args = env_args
+        print(self._env_args)
         self._log_dir = log_dir
         self._debug = debug_mode
 

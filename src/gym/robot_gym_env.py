@@ -22,7 +22,7 @@ class RobotGymEnv(gym.Env, ABC):
         terrain_type='plane',
         on_rack=False,
         render=False,
-        record_video=False,
+        record_video=True,
         debug=False,
         policy=False,
     ):

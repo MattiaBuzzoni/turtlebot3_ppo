@@ -38,6 +38,7 @@ def go():
     locals().update(default())
     # Environment
     env = 'GoEnv'
+    record_video=True
     return locals()
 
 

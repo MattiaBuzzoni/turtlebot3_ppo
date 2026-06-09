@@ -96,8 +96,9 @@ class Lidar:
         
         hit_results = pb_client.rayTestBatch(ray_froms, ray_tos)
         
-        if self._draw_debug_lines:
-            self._update_debug_lines(ray_froms, ray_tos, hit_results, pb_client)
+        self._draw_debug_lines = False
+        # if self._draw_debug_lines:
+        #     self._update_debug_lines(ray_froms, ray_tos, hit_results, pb_client)
         
         return hit_results
     

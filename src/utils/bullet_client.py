@@ -5,6 +5,8 @@ import functools
 import inspect
 import pybullet
 
+from src.core import sim_constants
+
 
 class BulletClient(object):
     """A wrapper for pybullet to manage different clients."""
@@ -28,7 +30,13 @@ class BulletClient(object):
                 return
             else:
                 connection_mode = pybullet.DIRECT
-        self._client = pybullet.connect(connection_mode)
+        self._client = pybullet.connect(connection_mode,
+                                        options=f"--width={sim_constants.RENDER_WIDTH} "
+                                                f"--height={sim_constants.RENDER_HEIGHT} "
+                                                "--background_color_red=0.50 "
+                                                "--background_color_green=0.50 "
+                                                "--background_color_blue=0.50")
+
 
     def __del__(self):
         """Clean up connection if not already done."""
