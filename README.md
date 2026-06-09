@@ -1,6 +1,6 @@
 # TurtleBot3 Navigation with PPO
 
-![demo](tests/demo.gif)
+![demo](tests/ppo_1000.gif)
 
 ## Overview
  
