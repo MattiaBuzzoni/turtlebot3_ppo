@@ -59,7 +59,7 @@ turtlebot3_ppo/
  
 ## Reward Function
  
-The reward signal couples **goal progress** and **heading alignment** into a single multiplicative term, so the agent is rewarded only when it moves *toward* the target *and* faces it correctly.
+The reward signal couples **goal progress** and **heading alignment** into a single multiplicative term, so the agent is rewarded only when it moves toward the target and faces it correctly.
  
 ### Definitions
  
