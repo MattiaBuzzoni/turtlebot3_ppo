@@ -1,7 +1,7 @@
 # TurtleBot3 Navigation with PPO
 
 <video width="700" controls>
-  <source src="tests/ppo_1000.mp4" type="video/mp4">
+  <source src="https://raw.githubusercontent.com/USER/REPO/main/tests/ppo_1000.mp4" type="video/mp4">
 </video>
 
 ## Overview
